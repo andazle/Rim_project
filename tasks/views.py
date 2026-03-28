@@ -16,7 +16,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
 class ColumnViewSet(viewsets.ModelViewSet):
     queryset = Column.objects.all()
     serializer_class = ColumnSerializer
+    def get_queryset(self):
+        return Column.objects.filter(project__owner=self.request.user)
 
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
+    def get_queryset(self):
+        return Task.objects.filter(column__project__owner=self.request.user)

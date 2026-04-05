@@ -22,5 +22,6 @@ class ColumnViewSet(viewsets.ModelViewSet):
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
+    permission_classes = [permissions.AllowAny]
     def get_queryset(self):
         return Task.objects.filter(column__project__owner=self.request.user)

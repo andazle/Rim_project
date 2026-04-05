@@ -129,3 +129,7 @@ SWAGGER_SETTINGS = {
     },
     'USE_SESSION_AUTH': False,
 }
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]

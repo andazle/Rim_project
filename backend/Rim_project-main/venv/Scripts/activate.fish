@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV 'C:\Users\genii micli\Desktop\рим_проект\Rim_project\venv'
+set -gx VIRTUAL_ENV 'C:\Users\User\Desktop\MyCppProjects\.vscode\my-project\backend\Rim_project-main\venv'
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"Scripts $PATH

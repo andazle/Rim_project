@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set "VIRTUAL_ENV=C:\Users\genii micli\Desktop\рим_проект\Rim_project\venv"
+set "VIRTUAL_ENV=C:\Users\User\Desktop\MyCppProjects\.vscode\my-project\backend\Rim_project-main\venv"
 
 if not defined PROMPT set PROMPT=$P$G
 

@@ -21,7 +21,7 @@ const Login = () => {
       navigate('/kanban');
     } catch (err) {
       console.error("Ошибка входа:", err.response?.data);
-      alert('Неверный логин или пароль. Сначала создайте суперпользователя в терминале!');
+      alert('Неверный логин или пароль!');
     }
   };
 
@@ -32,7 +32,7 @@ const Login = () => {
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <input 
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
-            type="text" placeholder="Логин (Username)" required
+            type="text" placeholder="Логин" required
             onChange={e => setFormData({...formData, username: e.target.value})}
           />
           <input 
@@ -40,9 +40,7 @@ const Login = () => {
             type="password" placeholder="Пароль" required
             onChange={e => setFormData({...formData, password: e.target.value})}
           />
-          <button type="submit" style={{ padding: '12px', background: '#007bff', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-            Войти в систему
-          </button>
+          <button type="submit" style={{ padding: '12px', background: '#007bff', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Войти</button>
         </form>
       </div>
     </div>
@@ -54,31 +52,29 @@ const KanbanBoard = () => {
   const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  
+  // 1. СОСТОЯНИЕ ДЛЯ ДАТЫ (по умолчанию — сегодня)
+  const [newTaskDeadline, setNewTaskDeadline] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     async function loadData() {
       const token = localStorage.getItem('token');
       if (!token) return;
-
       try {
         const [colRes, taskRes] = await Promise.all([
           axios.get(COLUMNS_API),
           axios.get(TASKS_API)
         ]);
-
-        // --- ПРИНУДИТЕЛЬНАЯ СОРТИРОВКА (СПОСОБ Б) ---
         const desiredOrder = ["Нужно сделать", "В работе", "Готово"];
         const sortedCols = colRes.data.sort((a, b) => {
           const nameA = a.title || a.name || "";
           const nameB = b.title || b.name || "";
           return desiredOrder.indexOf(nameA) - desiredOrder.indexOf(nameB);
         });
-        // --------------------------------------------
-
         setColumns(sortedCols);
         setTasks(taskRes.data);
       } catch (err) {
-        console.error("Ошибка загрузки данных:", err);
+        console.error("Ошибка загрузки:", err);
       } finally {
         setLoading(false);
       }
@@ -90,7 +86,6 @@ const KanbanBoard = () => {
     const currentIndex = columns.findIndex(c => c.id === currentColumnId);
     const nextColumn = columns[currentIndex + 1];
     if (!nextColumn) return;
-
     try {
       await axios.patch(`${TASKS_API}${taskId}/`, { column: nextColumn.id });
       setTasks(tasks.map(t => t.id === taskId ? { ...t, column: nextColumn.id } : t));
@@ -100,15 +95,18 @@ const KanbanBoard = () => {
   const addTask = async () => {
     if (!newTaskTitle.trim() || columns.length === 0) return;
     try {
-      const res = await axios.post(TASKS_API, {
-        title: newTaskTitle,
+      // 2. ИСПОЛЬЗУЕМ ВЫБРАННУЮ ДАТУ
+      const res = await axios.post(TASKS_API, {title: newTaskTitle,
         description: "Новая задача",
         column: columns[0].id,
-        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        deadline: new Date(newTaskDeadline).toISOString() 
       });
       setTasks(prev => [...prev, res.data]);
       setNewTaskTitle('');
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error("Ошибка при создании:", e.response?.data);
+      alert("Не удалось создать задачу. Проверь консоль.");
+    }
   };
 
   if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}><h2>Загрузка доски...</h2></div>;
@@ -118,8 +116,8 @@ const KanbanBoard = () => {
       <style>{`
         body { margin: 0; background-color: #f0f2f5; font-family: sans-serif; }
         .header { text-align: center; padding: 30px; }
-        .input-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
-        .input-group input { padding: 10px; width: 300px; border-radius: 8px; border: 1px solid #ddd; }
+        .input-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .input-group input { padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
         .board { display: flex; gap: 20px; justify-content: center; padding: 20px; overflow-x: auto; }
         .column { background: #ebecf0; width: 300px; padding: 15px; border-radius: 10px; min-height: 400px; }
         .task-list { display: flex; flex-direction: column; gap: 10px; }
@@ -128,7 +126,20 @@ const KanbanBoard = () => {
       <div className="header">
         <h1>Project 17 Kanban</h1>
         <div className="input-group">
-          <input value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} placeholder="Название новой задачи..." />
+          {/* ПОЛЕ НАЗВАНИЯ */}
+          <input 
+            value={newTaskTitle} 
+            onChange={e => setNewTaskTitle(e.target.value)} 
+            placeholder="Название задачи..." 
+            style={{ width: '250px' }}
+          />
+          {/* 3. ПОЛЕ ВЫБОРА ДАТЫ */}
+          <input 
+            type="date"
+            value={newTaskDeadline}
+            onChange={e => setNewTaskDeadline(e.target.value)}
+            style={{ width: '150px' }}
+          />
           <button onClick={addTask} style={{ padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Создать</button>
         </div>
       </div>

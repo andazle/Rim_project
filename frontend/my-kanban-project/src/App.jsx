@@ -65,7 +65,16 @@ const KanbanBoard = () => {
           axios.get(COLUMNS_API),
           axios.get(TASKS_API)
         ]);
-        const sortedCols = colRes.data.sort((a, b) => (a.position || a.id) - (b.position || b.id));
+
+        // --- ПРИНУДИТЕЛЬНАЯ СОРТИРОВКА (СПОСОБ Б) ---
+        const desiredOrder = ["Нужно сделать", "В работе", "Готово"];
+        const sortedCols = colRes.data.sort((a, b) => {
+          const nameA = a.title || a.name || "";
+          const nameB = b.title || b.name || "";
+          return desiredOrder.indexOf(nameA) - desiredOrder.indexOf(nameB);
+        });
+        // --------------------------------------------
+
         setColumns(sortedCols);
         setTasks(taskRes.data);
       } catch (err) {

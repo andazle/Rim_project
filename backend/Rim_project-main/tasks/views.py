@@ -1,13 +1,12 @@
-from rest_framework import permissions
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, generics, permissions
+from django.contrib.auth.models import User
 from .models import Project, Column, Task
-from .serializers import ProjectSerializer, ColumnSerializer, TaskSerializer
+from .serializers import ProjectSerializer, ColumnSerializer, TaskSerializer, RegisterSerializer 
 
 class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = Project.objects.all()
-    serializer_class = ProjectSerializer
     def get_queryset(self):
         return Project.objects.filter(owner=self.request.user)
 
@@ -27,3 +26,8 @@ class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     def get_queryset(self):
         return Task.objects.all()
+    
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    permission_classes = [permissions.AllowAny]
+    serializer_class = RegisterSerializer

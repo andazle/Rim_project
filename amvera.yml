@@ -3,7 +3,6 @@ meta:
   toolchain:
     name: pip
     version: 3.11
-build:
-  requirements: requirements.txt
+
 run:
-  command: python manage.py runserver 0.0.0.0:$PORT
+  command: python manage.py migrate && python manage.py runserver 0.0.0.0:$PORT

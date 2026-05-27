@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'r
 import { TaskCard } from './components/TaskCard';
 
 const LOGIN_API = 'http://127.0.0.1:8000/api/token/';
-const BASE_URL = 'http://127.0.0.1:8000/api/v1/api/v1';
+const BASE_URL = 'https://scheduler-backend-x9ec.onrender.com'
 const TASKS_API = `${BASE_URL}/tasks/`;
 const COLUMNS_API = `${BASE_URL}/columns/`;
 
@@ -30,15 +30,15 @@ const Login = () => {
       <div style={{ background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', width: '350px' }}>
         <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Project 17: Вход</h2>
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <input 
+          <input
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             type="text" placeholder="Логин" required
-            onChange={e => setFormData({...formData, username: e.target.value})}
+            onChange={e => setFormData({ ...formData, username: e.target.value })}
           />
-          <input 
+          <input
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             type="password" placeholder="Пароль" required
-            onChange={e => setFormData({...formData, password: e.target.value})}
+            onChange={e => setFormData({ ...formData, password: e.target.value })}
           />
           <button type="submit" style={{ padding: '12px', background: '#007bff', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Войти</button>
         </form>
@@ -52,7 +52,7 @@ const KanbanBoard = () => {
   const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  
+
   // 1. СОСТОЯНИЕ ДЛЯ ДАТЫ (по умолчанию — сегодня)
   const [newTaskDeadline, setNewTaskDeadline] = useState(new Date().toISOString().split('T')[0]);
 
@@ -96,14 +96,15 @@ const KanbanBoard = () => {
     if (!newTaskTitle.trim() || columns.length === 0) return;
     try {
       // 2. ИСПОЛЬЗУЕМ ВЫБРАННУЮ ДАТУ
-      const res = await axios.post(TASKS_API, {title: newTaskTitle,
+      const res = await axios.post(TASKS_API, {
+        title: newTaskTitle,
         description: "Новая задача",
         column: columns[0].id,
-        deadline: new Date(newTaskDeadline).toISOString() 
+        deadline: new Date(newTaskDeadline).toISOString()
       });
       setTasks(prev => [...prev, res.data]);
       setNewTaskTitle('');
-    } catch (e) { 
+    } catch (e) {
       console.error("Ошибка при создании:", e.response?.data);
       alert("Не удалось создать задачу. Проверь консоль.");
     }
@@ -127,14 +128,14 @@ const KanbanBoard = () => {
         <h1>Project 17 Kanban</h1>
         <div className="input-group">
           {/* ПОЛЕ НАЗВАНИЯ */}
-          <input 
-            value={newTaskTitle} 
-            onChange={e => setNewTaskTitle(e.target.value)} 
-            placeholder="Название задачи..." 
+          <input
+            value={newTaskTitle}
+            onChange={e => setNewTaskTitle(e.target.value)}
+            placeholder="Название задачи..."
             style={{ width: '250px' }}
           />
           {/* 3. ПОЛЕ ВЫБОРА ДАТЫ */}
-          <input 
+          <input
             type="date"
             value={newTaskDeadline}
             onChange={e => setNewTaskDeadline(e.target.value)}
@@ -150,9 +151,9 @@ const KanbanBoard = () => {
             <h3 style={{ borderBottom: '2px solid #ccc', paddingBottom: '10px' }}>{col.title || col.name}</h3>
             <div className="task-list">
               {tasks.filter(t => t.column === col.id).map(task => (
-                <TaskCard 
-                  key={task.id} task={task} 
-                  onMove={() => moveTask(task.id, col.id)} 
+                <TaskCard
+                  key={task.id} task={task}
+                  onMove={() => moveTask(task.id, col.id)}
                   onDelete={async () => {
                     await axios.delete(`${TASKS_API}${task.id}/`);
                     setTasks(tasks.filter(t => t.id !== task.id));

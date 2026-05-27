@@ -129,3 +129,9 @@ SWAGGER_SETTINGS = {
     },
     'USE_SESSION_AUTH': False,
 }
+
+CORS_ALLOWED_ORIGINS = [
+    "https://andazle.github.io",
+]
+
+CORS_ALLOW_CREDENTIALS = True

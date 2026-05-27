@@ -3,45 +3,79 @@ import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { TaskCard } from './components/TaskCard';
 
-const LOGIN_API = 'http://127.0.0.1:8000/api/token/';
-const BASE_URL = 'https://scheduler-backend-x9ec.onrender.com'
+
+const BASE_URL = 'https://scheduler-backend-x9ec.onrender.com';
+const LOGIN_API = `${BASE_URL}/api/token/`;
+const REGISTER_API = `${BASE_URL}/api/register/`;
 const TASKS_API = `${BASE_URL}/tasks/`;
 const COLUMNS_API = `${BASE_URL}/columns/`;
 
 const Login = () => {
+  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ username: '', password: '' });
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleAuth = async (e) => {
     e.preventDefault();
+
+    const API_URL = isLogin ? LOGIN_API : REGISTER_API;
+
     try {
-      const res = await axios.post(LOGIN_API, formData);
-      localStorage.setItem('token', res.data.access);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.access}`;
-      navigate('/kanban');
+      const res = await axios.post(API_URL, formData);
+
+      if (isLogin) {
+        localStorage.setItem('token', res.data.access);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.access}`;
+        navigate('/kanban');
+      } else {
+        alert('Регистрация успешна! Теперь вы можете войти под своим логином.');
+        setIsLogin(true);
+      }
     } catch (err) {
-      console.error("Ошибка входа:", err.response?.data);
-      alert('Неверный логин или пароль!');
+      console.error("Ошибка авторизации:", err.response?.data);
+      if (isLogin) {
+        alert('Неверный логин или пароль!');
+      } else {
+        const errorMsg = err.response?.data?.username || 'Ошибка регистрации! Возможно, такое имя уже занято.';
+        alert(errorMsg);
+      }
     }
   };
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
       <div style={{ background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', width: '350px' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Project 17: Вход</h2>
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        {/* Динамический заголовок */}
+        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>
+          Project 17: {isLogin ? 'Вход' : 'Регистрация'}
+        </h2>
+
+        <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <input
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             type="text" placeholder="Логин" required
+            value={formData.username}
             onChange={e => setFormData({ ...formData, username: e.target.value })}
           />
           <input
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             type="password" placeholder="Пароль" required
+            value={formData.password}
             onChange={e => setFormData({ ...formData, password: e.target.value })}
           />
-          <button type="submit" style={{ padding: '12px', background: '#007bff', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Войти</button>
+          {/* Динамический текст кнопки */}
+          <button type="submit" style={{ padding: '12px', background: '#007bff', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+            {isLogin ? 'Войти' : 'Зарегистрироваться'}
+          </button>
         </form>
+
+        {/* Кликабельный текст-переключатель */}
+        <p
+          onClick={() => setIsLogin(!isLogin)}
+          style={{ textAlign: 'center', marginTop: '15px', cursor: 'pointer', color: '#007bff', fontSize: '14px', userSelect: 'none' }}
+        >
+          {isLogin ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
+        </p>
       </div>
     </div>
   );
@@ -52,8 +86,6 @@ const KanbanBoard = () => {
   const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newTaskTitle, setNewTaskTitle] = useState('');
-
-  // 1. СОСТОЯНИЕ ДЛЯ ДАТЫ (по умолчанию — сегодня)
   const [newTaskDeadline, setNewTaskDeadline] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
@@ -61,6 +93,8 @@ const KanbanBoard = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
       try {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
         const [colRes, taskRes] = await Promise.all([
           axios.get(COLUMNS_API),
           axios.get(TASKS_API)
@@ -95,7 +129,6 @@ const KanbanBoard = () => {
   const addTask = async () => {
     if (!newTaskTitle.trim() || columns.length === 0) return;
     try {
-      // 2. ИСПОЛЬЗУЕМ ВЫБРАННУЮ ДАТУ
       const res = await axios.post(TASKS_API, {
         title: newTaskTitle,
         description: "Новая задача",
@@ -127,14 +160,12 @@ const KanbanBoard = () => {
       <div className="header">
         <h1>Project 17 Kanban</h1>
         <div className="input-group">
-          {/* ПОЛЕ НАЗВАНИЯ */}
           <input
             value={newTaskTitle}
             onChange={e => setNewTaskTitle(e.target.value)}
             placeholder="Название задачи..."
             style={{ width: '250px' }}
           />
-          {/* 3. ПОЛЕ ВЫБОРА ДАТЫ */}
           <input
             type="date"
             value={newTaskDeadline}

@@ -9,11 +9,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Каждый видит только свои проекты
         return Project.objects.filter(owner=self.request.user)
 
     def perform_create(self, serializer):
-        # Автоматически назначаем владельца при создании
         serializer.save(owner=self.request.user)
 
 class ColumnViewSet(viewsets.ModelViewSet):

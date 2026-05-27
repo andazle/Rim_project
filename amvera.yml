@@ -1,8 +1,0 @@
-meta:
-  environment: python
-  toolchain:
-    name: pip
-    version: 3.11
-
-run:
-  command: python manage.py migrate && python manage.py runserver 0.0.0.0:$PORT

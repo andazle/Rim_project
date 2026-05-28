@@ -5,6 +5,12 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from tasks.views import RegisterView
+from django.http import HttpResponse  
+
+
+def home(request):
+    return HttpResponse("Привет! Это API проекта Rim Project. Доступные пути: /admin, /api/v1/")
+
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -17,6 +23,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    path('', home), 
     path('admin/', admin.site.urls),
     path('api/v1/', include('tasks.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

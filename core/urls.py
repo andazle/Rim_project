@@ -21,6 +21,6 @@ urlpatterns = [
     path('api/v1/', include('tasks.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/v1/register/', RegisterView.as_view(), name='register'),
+    path('api/register/', RegisterView.as_view(), name='register'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]

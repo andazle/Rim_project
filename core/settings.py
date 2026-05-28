@@ -113,7 +113,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     )
 }
-
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
         'Bearer': {
@@ -126,7 +125,7 @@ SWAGGER_SETTINGS = {
 }
 
 CORS_ALLOWED_ORIGINS = [
-    "https://rimproject.netlify.app/",
+    "https://rimproject.netlify.app",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]

@@ -1,11 +1,7 @@
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework import viewsets, permissions, status 
-from rest_framework.views import APIView
-from rest_framework.response import Response 
-
+from rest_framework import viewsets
+from rest_framework.permissions import AllowAny
 from .models import Project, Column, Task
-from .serializers import ProjectSerializer, ColumnSerializer, TaskSerializer, RegisterSerializer 
+from .serializers import ProjectSerializer, ColumnSerializer, TaskSerializer
 
 
 
@@ -22,29 +18,18 @@ class RegisterView(APIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ProjectViewSet(viewsets.ModelViewSet):
+    queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    permission_classes = [permissions.IsAuthenticated] 
-    
-    def get_queryset(self):
-        return Project.objects.filter(owner=self.request.user)
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+    permission_classes = [AllowAny]
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ColumnViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAuthenticated] 
     queryset = Column.objects.all()
     serializer_class = ColumnSerializer
-    
-    def get_queryset(self):
-        return Column.objects.all()
+    permission_classes = [AllowAny]
 
 @method_decorator(csrf_exempt, name='dispatch')
 class TaskViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAuthenticated] 
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
-    
-    def get_queryset(self):
-        return Task.objects.all()
+    permission_classes = [AllowAny]

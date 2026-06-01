@@ -3,6 +3,7 @@ import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { TaskCard } from './components/TaskCard';
 import { NavBar } from './components/NavBar';
+import { ensureColumns } from './api';
 import DashboardPage from './pages/DashboardPage';
 import SchemePage from './pages/SchemePage';
 
@@ -10,7 +11,6 @@ const BASE_URL = 'http://127.0.0.1:8000/api/v1';
 const LOGIN_API = 'http://127.0.0.1:8000/api/token/';
 const REGISTER_API = `${BASE_URL}/register/`; 
 const TASKS_API = `${BASE_URL}/tasks/`;
-const COLUMNS_API = `${BASE_URL}/columns/`;
 
 const Login = () => {
   const [formData, setFormData] = useState({ username: '', password: '' });
@@ -139,40 +139,19 @@ const KanbanBoard = () => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       try {
-        const [colRes, taskRes] = await Promise.all([
-          axios.get(COLUMNS_API),
-          axios.get(TASKS_API)
-        ]);
-
-        let currentCols = colRes.data;
-        if (!currentCols || currentCols.length === 0) {
-          currentCols = [
-            { id: 1, title: "Нужно сделать", name: "Нужно сделать" },
-            { id: 2, title: "В работе", name: "В работе" },
-            { id: 3, title: "Готово", name: "Готово" }
-          ];
-        } else {
-          const desiredOrder = ["Нужно сделать", "В работе", "Готово"];
-          currentCols.sort((a, b) => {
-            const nameA = a.title || a.name || "";
-            const nameB = b.title || b.name || "";
-            return desiredOrder.indexOf(nameA) - desiredOrder.indexOf(nameB);
-          });
-        }
-        
+        // Гарантируем наличие колонок в БД (создаст их при первом входе)
+        // и убираем дубли колонок (дедупликация по названию).
+        const currentCols = await ensureColumns();
         setColumns(currentCols);
-        
+
+        const taskRes = await axios.get(TASKS_API);
         if (taskRes.data && Array.isArray(taskRes.data)) {
           const userTasks = taskRes.data.filter(t => t.description === currentUser);
           setTasks(userTasks);
         }
       } catch (err) {
         console.error("Ошибка загрузки:", err);
-        setColumns([
-          { id: 1, title: "Нужно сделать", name: "Нужно сделать" },
-          { id: 2, title: "В работе", name: "В работе" },
-          { id: 3, title: "Готово", name: "Готово" }
-        ]);
+        alert("Не удалось загрузить доску. Проверьте, что сервер запущен.");
       } finally {
         setLoading(false);
       }
@@ -265,7 +244,7 @@ const KanbanBoard = () => {
           <div key={col.id} className="column">
             <h3 style={{ borderBottom: '2px solid #ccc', paddingBottom: '10px' }}>{col.title || col.name}</h3>
             <div className="task-list">
-              {tasks.filter(t => t.column === col.id).map(task => (
+              {tasks.filter(t => (col.aliasIds || [col.id]).includes(t.column)).map(task => (
                 <TaskCard 
                   key={task.id} 
                   task={task} 

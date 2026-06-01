@@ -16,12 +16,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True 
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
-ALLOWED_HOSTS = [
-    'rim-project.onrender.com',           
-    'scheduler-backend-x9ec.onrender.com', 
-    'localhost',
-    '127.0.0.1'
-]
+ALLOWED_HOSTS = ['rim-project-2.onrender.com', '127.0.0.1', 'localhost']
 
 
 INSTALLED_APPS = [
@@ -125,7 +120,7 @@ SWAGGER_SETTINGS = {
 }
 
 CORS_ALLOWED_ORIGINS = [
-    "https://rimproject.netlify.app",
-    "http://localhost:5173",
+    "https://твой-сайт.netlify.app", 
+    "http://localhost:5173",         
     "http://127.0.0.1:5173",
 ]

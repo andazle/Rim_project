@@ -3,8 +3,8 @@ import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { TaskCard } from './components/TaskCard';
 
-const BASE_URL = 'http://127.0.0.1:8000/api/v1';
-const LOGIN_API = 'http://127.0.0.1:8000/api/token/';
+const BASE_URL = 'https://rim-project-2.onrender.com/api/v1';
+const LOGIN_API = 'https://rim-project-2.onrender.com/api/token/';
 const REGISTER_API = `${BASE_URL}/register/`;
 const TASKS_API = `${BASE_URL}/tasks/`;
 const COLUMNS_API = `${BASE_URL}/columns/`;

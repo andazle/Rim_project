@@ -299,7 +299,7 @@ const KanbanBoard = () => {
                   task={task} 
                   onMove={() => moveTask(task.id, col.id)} 
                   onDelete={() => deleteTask(task.id)}
-                  nextText={columns[idx + 1] ? "👉 Далее" : null}
+                  nextText={columns[idx + 1] ? "Далее" : null}
                 />
               ))}
             </div>

@@ -18,10 +18,6 @@ export function TaskCard({ task, onMove, onDelete, nextText }) {
           ×
         </button>
       </div>
-      
-      {task.description && (
-        <p style={{ fontSize: '13px', color: '#666', margin: '5px 0' }}>{task.description}</p>
-      )}
 
       {task.deadline && (
         <div style={{ 
@@ -30,7 +26,7 @@ export function TaskCard({ task, onMove, onDelete, nextText }) {
           color: isOverdue ? '#ff5252' : '#999',
           fontWeight: isOverdue ? 'bold' : 'normal'
         }}>
-          ⏱ {new Date(task.deadline).toLocaleDateString()}
+          До {new Date(task.deadline).toLocaleDateString()}
         </div>
       )}
 

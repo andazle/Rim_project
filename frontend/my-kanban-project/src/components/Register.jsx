@@ -13,10 +13,9 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            // URL бэкенда Андрея (проверь порт!)
             const response = await axios.post('http://127.0.0.1:8000/api/register/', formData);
             alert('Регистрация успешна!');
-            navigate('/login'); // Переходим на вход после успеха
+            navigate('/login');
         } catch (error) {
             console.error('Ошибка регистрации:', error.response?.data);
             alert('Ошибка: ' + JSON.stringify(error.response?.data));

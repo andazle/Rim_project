@@ -4,8 +4,8 @@ import axios from 'axios';
  * Единый слой работы с REST API (Django REST Framework).
  * Базовые адреса соответствуют маршрутам бэкенда команды.
  */
-export const BASE_URL = 'http://127.0.0.1:8000/api/v1';
-export const LOGIN_API = 'http://127.0.0.1:8000/api/token/';
+export const BASE_URL = 'https://rim-project-2.onrender.com/api/v1';
+export const LOGIN_API = `${BASE_URL}/token/`;
 export const REGISTER_API = `${BASE_URL}/register/`;
 export const TASKS_API = `${BASE_URL}/tasks/`;
 export const COLUMNS_API = `${BASE_URL}/columns/`;

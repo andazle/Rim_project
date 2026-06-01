@@ -172,6 +172,8 @@ const KanbanBoard = () => {
   const addTask = async () => {
     if (!newTaskTitle.trim() || columns.length === 0) return;
     try {
+      console.log("ID первой колонки:", columns[0].id);
+
       const res = await axios.post(TASKS_API, {
         title: newTaskTitle,
         description: currentUser,
@@ -182,16 +184,7 @@ const KanbanBoard = () => {
       setNewTaskTitle('');
     } catch (e) {
       console.error("Ошибка при создании:", e.response?.data);
-      const fakeId = Date.now();
-      const fallbackTask = {
-        id: fakeId,
-        title: newTaskTitle,
-        description: currentUser,
-        column: columns[0].id,
-        deadline: newTaskDeadline
-      };
-      setTasks(prev => [...prev, fallbackTask]);
-      setNewTaskTitle('');
+      alert(`Ошибка сервера при создании: ${JSON.stringify(e.response?.data)}`);
     }
   };
 

@@ -139,8 +139,6 @@ const KanbanBoard = () => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       try {
-        // Гарантируем наличие колонок в БД (создаст их при первом входе)
-        // и убираем дубли колонок (дедупликация по названию).
         const currentCols = await ensureColumns();
         setColumns(currentCols);
 

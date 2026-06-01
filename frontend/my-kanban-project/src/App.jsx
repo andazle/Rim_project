@@ -5,7 +5,7 @@ import { TaskCard } from './components/TaskCard';
 
 const BASE_URL = 'http://127.0.0.1:8000/api/v1';
 const LOGIN_API = 'http://127.0.0.1:8000/api/token/';
-const REGISTER_API = `${BASE_URL}/register/`; 
+const REGISTER_API = `${BASE_URL}/register/`;
 const TASKS_API = `${BASE_URL}/tasks/`;
 const COLUMNS_API = `${BASE_URL}/columns/`;
 
@@ -48,7 +48,7 @@ const Login = () => {
           <input
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             type="text" placeholder="Логин (латиница)" required
-            onChange={e => setFormData({...formData, username: e.target.value})}
+            onChange={e => setFormData({ ...formData, username: e.target.value })}
           />
           <input
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
@@ -74,7 +74,7 @@ const Register = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.password_confirm) {
       alert("Пароли не совпадают!");
       return;
@@ -102,21 +102,21 @@ const Register = () => {
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
       <div style={{ background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', width: '350px' }}>
         <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Project 17: Регистрация</h2>
-        <form onSubmit={handleRegister} style={{display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <input 
+        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <input
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             type="text" placeholder="Придумайте логин (латиница)" required
-            onChange={e => setFormData({...formData, username: e.target.value})}
+            onChange={e => setFormData({ ...formData, username: e.target.value })}
           />
-          <input 
+          <input
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             type="password" placeholder="Придумайте пароль" required
-            onChange={e => setFormData({...formData, password: e.target.value})}
+            onChange={e => setFormData({ ...formData, password: e.target.value })}
           />
-          <input 
+          <input
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             type="password" placeholder="Повторите пароль" required
-            onChange={e => setFormData({...formData, password_confirm: e.target.value})}
+            onChange={e => setFormData({ ...formData, password_confirm: e.target.value })}
           />
           <button type="submit" style={{ padding: '12px', background: '#28a745', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
             Создать аккаунт
@@ -128,10 +128,9 @@ const Register = () => {
 
         {/* Кликабельный текст-переключатель */}
         <p
-          onClick={() => setIsLogin(!isLogin)}
+          onClick={() => navigate('/login')}
           style={{ textAlign: 'center', marginTop: '15px', cursor: 'pointer', color: '#007bff', fontSize: '14px', userSelect: 'none' }}
         >
-          {isLogin ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
         </p>
       </div>
     </div>
@@ -154,9 +153,9 @@ const KanbanBoard = () => {
         navigate('/login');
         return;
       }
-      
+
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
+
       try {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
@@ -180,9 +179,9 @@ const KanbanBoard = () => {
             return desiredOrder.indexOf(nameA) - desiredOrder.indexOf(nameB);
           });
         }
-        
+
         setColumns(currentCols);
-        
+
         if (taskRes.data && Array.isArray(taskRes.data)) {
           const userTasks = taskRes.data.filter(t => t.description === currentUser);
           setTasks(userTasks);
@@ -212,7 +211,7 @@ const KanbanBoard = () => {
   };
 
   const addTask = async () => {
-    if (!newTaskTitle.trim()|| columns.length === 0) return;
+    if (!newTaskTitle.trim() || columns.length === 0) return;
     try {
       const res = await axios.post(TASKS_API, {
         title: newTaskTitle,
@@ -272,13 +271,13 @@ const KanbanBoard = () => {
         <button className="logout-btn" onClick={handleLogout}>Выйти ({currentUser})</button>
         <h1>Project 17 Kanban</h1>
         <div className="input-group">
-          <input 
-            value={newTaskTitle} 
-            onChange={e => setNewTaskTitle(e.target.value)} 
-            placeholder="Название задачи..." 
+          <input
+            value={newTaskTitle}
+            onChange={e => setNewTaskTitle(e.target.value)}
+            placeholder="Название задачи..."
             style={{ width: '250px' }}
           />
-          <input 
+          <input
             type="date"
             value={newTaskDeadline}
             onChange={e => setNewTaskDeadline(e.target.value)}
@@ -294,10 +293,10 @@ const KanbanBoard = () => {
             <h3 style={{ borderBottom: '2px solid #ccc', paddingBottom: '10px' }}>{col.title || col.name}</h3>
             <div className="task-list">
               {tasks.filter(t => t.column === col.id).map(task => (
-                <TaskCard 
-                  key={task.id} 
-                  task={task} 
-                  onMove={() => moveTask(task.id, col.id)} 
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onMove={() => moveTask(task.id, col.id)}
                   onDelete={() => deleteTask(task.id)}
                   nextText={columns[idx + 1] ? "Далее" : null}
                 />

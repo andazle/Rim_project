@@ -10,14 +10,11 @@ const TASKS_API = `${BASE_URL}/tasks/`;
 const COLUMNS_API = `${BASE_URL}/columns/`;
 
 const Login = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ username: '', password: '' });
   const navigate = useNavigate();
 
   const handleAuth = async (e) => {
     e.preventDefault();
-
-    const API_URL = isLogin ? LOGIN_API : REGISTER_API;
 
     try {
       const res = await axios.post(LOGIN_API, formData);
@@ -27,22 +24,14 @@ const Login = () => {
       navigate('/kanban');
     } catch (err) {
       console.error("Ошибка авторизации:", err.response?.data);
-      if (isLogin) {
-        alert('Неверный логин или пароль!');
-      } else {
-        const errorMsg = err.response?.data?.username || 'Ошибка регистрации! Возможно, такое имя уже занято.';
-        alert(errorMsg);
-      }
+      alert('Неверный логин или пароль!');
     }
   };
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
       <div style={{ background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', width: '350px' }}>
-        {/* Динамический заголовок */}
-        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>
-          Project 17: {isLogin ? 'Вход' : 'Регистрация'}
-        </h2>
+        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Project 17: Вход</h2>
 
         <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <input
@@ -125,13 +114,6 @@ const Register = () => {
             Уже зарегистрированы? Войти
           </button>
         </form>
-
-        {/* Кликабельный текст-переключатель */}
-        <p
-          onClick={() => navigate('/login')}
-          style={{ textAlign: 'center', marginTop: '15px', cursor: 'pointer', color: '#007bff', fontSize: '14px', userSelect: 'none' }}
-        >
-        </p>
       </div>
     </div>
   );
@@ -157,8 +139,6 @@ const KanbanBoard = () => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       try {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
         const [colRes, taskRes] = await Promise.all([
           axios.get(COLUMNS_API),
           axios.get(TASKS_API)

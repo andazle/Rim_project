@@ -1,0 +1,21 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Django
+*.sqlite3
+*.log
+
+# Окружение
+.env
+
+# Node
+node_modules/
+dist/
+
+# IDE / ОС
+.vscode/
+.idea/
+.DS_Store

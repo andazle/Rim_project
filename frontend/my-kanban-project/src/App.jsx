@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { TaskCard } from './components/TaskCard';
+import { NavBar } from './components/NavBar';
+import DashboardPage from './pages/DashboardPage';
+import SchemePage from './pages/SchemePage';
 
 const BASE_URL = 'http://127.0.0.1:8000/api/v1';
 const LOGIN_API = 'http://127.0.0.1:8000/api/token/';
@@ -222,13 +225,6 @@ const KanbanBoard = () => {
     setTasks(tasks.filter(t => t.id !== taskId));
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    delete axios.defaults.headers.common['Authorization'];
-    navigate('/login');
-  };
-
   if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}><h2>Загрузка доски...</h2></div>;
 
   return (
@@ -236,7 +232,6 @@ const KanbanBoard = () => {
       <style>{`
         body { margin: 0; background-color: #f0f2f5; font-family: sans-serif; }
         .header { text-align: center; padding: 30px; position: relative; }
-        .logout-btn { position: absolute; top: 20px; right: 20px; padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; }
         .input-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
         .input-group input { padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
         .board { display: flex; gap: 20px; justify-content: center; padding: 20px; overflow-x: auto; }
@@ -244,8 +239,9 @@ const KanbanBoard = () => {
         .task-list { display: flex; flex-direction: column; gap: 10px; }
       `}</style>
 
+      <NavBar />
+
       <div className="header">
-        <button className="logout-btn" onClick={handleLogout}>Выйти ({currentUser})</button>
         <h1>Project 17 Kanban</h1>
         <div className="input-group">
           <input 
@@ -293,6 +289,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/kanban" element={<KanbanBoard />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/scheme" element={<SchemePage />} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>

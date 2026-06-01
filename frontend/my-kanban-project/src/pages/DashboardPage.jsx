@@ -43,10 +43,14 @@ const computeStats = (columns, tasks) => {
   const inProgress = tasks.filter((t) => matches(colById.get(t.column)?.title, ['работ', 'progress']));
   const overdue = tasks.filter((t) => isOverdue(t) && !done.includes(t));
 
-  const byStatus = columns.map((c) => ({
-    status: c.title || c.name || '—',
-    count: tasks.filter((t) => t.column === c.id).length,
-  }));
+  // Распределение по статусам: группируем по НАЗВАНИЮ колонки,
+  // чтобы возможные дубли колонок объединялись в один сектор.
+  const statusCounts = {};
+  tasks.forEach((t) => {
+    const status = colById.get(t.column)?.title || '—';
+    statusCounts[status] = (statusCounts[status] || 0) + 1;
+  });
+  const byStatus = Object.entries(statusCounts).map(([status, count]) => ({ status, count }));
 
   // Группировка по участникам: в этом проекте автор задачи хранится в поле description.
   const userCounts = {};

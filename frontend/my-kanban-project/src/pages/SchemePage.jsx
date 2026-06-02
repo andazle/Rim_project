@@ -5,12 +5,6 @@ import {
   applyAuthHeader, fetchUserTasks, saveTaskPosition, clearTaskPosition,
 } from '../api';
 
-/**
- * Интерактивная схема проекта.
- * Пользователь загружает изображение схемы и расставляет на нём метки задач.
- * Координаты меток хранятся в долях размера изображения (0..1) в полях
- * x_pos / y_pos задачи, поэтому метки корректно отображаются на любом экране.
- */
 export default function SchemePage() {
   const navigate = useNavigate();
   const [image, setImage] = useState(null);
@@ -19,7 +13,6 @@ export default function SchemePage() {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState('');
 
-  // Диалог привязки задачи к выбранной точке
   const [pendingPos, setPendingPos] = useState(null);
   const [selectedTaskId, setSelectedTaskId] = useState('');
 
@@ -42,7 +35,6 @@ export default function SchemePage() {
         const data = await fetchUserTasks();
         if (!active) return;
         setTasks(data);
-        // Восстанавливаем ранее сохранённые метки из координат задач
         setMarkers(
           data
             .filter((t) => t.x_pos != null && t.y_pos != null)
@@ -65,7 +57,6 @@ export default function SchemePage() {
     reader.readAsDataURL(file);
   };
 
-  // Клик по изображению -> относительные координаты (0..1)
   const handleImageClick = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width;
@@ -194,7 +185,6 @@ export default function SchemePage() {
               </>
             )}
 
-            {/* Диалог выбора задачи для новой метки */}
             {pendingPos && (
               <div
                 style={{

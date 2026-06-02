@@ -160,14 +160,19 @@ const KanbanBoard = () => {
       } catch (err) {
         console.error("Ошибка загрузки:", err);
 
+        if (err.response && err.response.status === 401) {
+          localStorage.removeItem('token');
+          alert("Сессия устарела. Пожалуйста, войдите заново.");
+          navigate('/login');
+          return;
+        }
+
         const errorDetail = err.response?.data
           ? JSON.stringify(err.response.data)
           : err.message;
         const status = err.response?.status ? `[Статус ${err.response.status}] ` : '';
 
         alert(`Ошибка загрузки доски! ${status}${errorDetail}`);
-      } finally {
-        setLoading(false);
       }
     }
     loadData();

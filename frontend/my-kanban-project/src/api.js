@@ -41,30 +41,51 @@ export const fetchColumns = async () => {
 };
 
 export const ensureColumns = async () => {
+  applyAuthHeader();
+
   let columns = await fetchColumns();
 
   if (columns.length === 0) {
     let projectId;
+
+    const ownerId = getCurrentUserId();
+
     try {
       const { data: projects } = await axios.get(PROJECTS_API);
-      projectId = projects[0]?.id;
-    } catch {
+      if (Array.isArray(projects) && projects.length > 0) {
+        projectId = projects[0].id;
+      }
+    } catch (e) {
+      console.error("Не удалось загрузить проекты:", e);
       projectId = undefined;
     }
+
     if (!projectId) {
-      const { data: project } = await axios.post(PROJECTS_API, {
-        name: 'Project 17',
-        description: 'Доска задач',
-        owner: getCurrentUserId(),
-      });
-      projectId = project.id;
+      try {
+        const { data: project } = await axios.post(PROJECTS_API, {
+          name: 'Project 17',
+          description: 'Доска задач',
+          owner: ownerId,
+        });
+        projectId = project.id;
+        console.log("Создан новый проект с ID:", projectId);
+      } catch (postErr) {
+        console.error("Критическая ошибка при создании проекта:", postErr.response?.data || postErr.message);
+        throw postErr;
+      }
     }
 
-    await Promise.all(
-      DEFAULT_COLUMNS.map((title, order) =>
-        axios.post(COLUMNS_API, { title, order, project: projectId })
-      )
-    );
+    try {
+      await Promise.all(
+        DEFAULT_COLUMNS.map((title, order) =>
+          axios.post(COLUMNS_API, { title, order, project: projectId })
+        )
+      );
+      console.log("Дефолтные колонки успешно созданы");
+    } catch (colErr) {
+      console.error("Ошибка при создании колонок:", colErr.response?.data || colErr.message);
+      throw colErr;
+    }
 
     columns = await fetchColumns();
   }

@@ -148,19 +148,23 @@ const KanbanBoard = () => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       try {
-        const [currentCols, taskRes] = await Promise.all([
-          ensureColumns(),
-          axios.get(TASKS_API)
-        ]);
+        setLoading(true);
 
+        console.log("Запрашиваем колонки...");
+        const currentCols = await ensureColumns();
         setColumns(currentCols);
+        console.log("Колонки загружены:", currentCols);
+
+        console.log("Запрашиваем задачи...");
+        const taskRes = await axios.get(TASKS_API);
 
         if (taskRes.data && Array.isArray(taskRes.data)) {
           const userTasks = taskRes.data.filter(t => t.description === currentUser);
           setTasks(userTasks);
         }
+
       } catch (err) {
-        console.error("Ошибка загрузки:", err);
+        console.error("Критическая ошибка при загрузке доски:", err);
 
         if (err.response && err.response.status === 401) {
           localStorage.removeItem('token');
@@ -174,7 +178,9 @@ const KanbanBoard = () => {
           : err.message;
         const status = err.response?.status ? `[Статус ${err.response.status}] ` : '';
 
-        alert(`Ошибка загрузки доски! ${status}${errorDetail}`);
+        alert(`Ошибка загрузки данных! ${status}${errorDetail}`);
+      } finally {
+        setLoading(false);
       }
     }
     loadData();

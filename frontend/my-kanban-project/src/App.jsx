@@ -215,6 +215,7 @@ const KanbanBoard = () => {
 
   const moveTask = async (taskId, currentColumnId) => {
     const currentIdx = columns.findIndex(col => col.id === currentColumnId);
+    const currentColumn = columns[currentIdx];
     const nextColumn = columns[currentIdx + 1];
 
     if (!nextColumn) return;
@@ -223,6 +224,18 @@ const KanbanBoard = () => {
       await axios.patch(`${TASKS_API}${taskId}/`, {
         column: nextColumn.id
       });
+
+      const timestamp = new Date().toISOString();
+      const logEntry = {
+        taskId,
+        taskTitle: tasks.find(t => t.id === taskId)?.title || 'Без названия',
+        fromColumn: currentColumn.title || currentColumn.name,
+        toColumn: nextColumn.title || nextColumn.name,
+        movedAt: timestamp
+      };
+      const existingLogs = JSON.parse(localStorage.getItem('task_time_logs') || '[]');
+      existingLogs.push(logEntry);
+      localStorage.setItem('task_time_logs', JSON.stringify(existingLogs));
       setTasks(prevTasks =>
         prevTasks.map(t => (t.id === taskId ? { ...t, column: nextColumn.id } : t))
       );

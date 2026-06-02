@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const BASE_URL = 'https://rim-project-2.onrender.com/api/v1';
+const BASE_URL = 'https://rim-project-3.onrender.com/api/v1';
 export const LOGIN_API = `${BASE_URL}/token/`;
 export const REGISTER_API = `${BASE_URL}/register/`;
 export const TASKS_API = `${BASE_URL}/tasks/`;

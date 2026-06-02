@@ -146,10 +146,13 @@ const KanbanBoard = () => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       try {
-        const currentCols = await ensureColumns();
+        const [currentCols, taskRes] = await Promise.all([
+          ensureColumns(),
+          axios.get(TASKS_API)
+        ]);
+
         setColumns(currentCols);
 
-        const taskRes = await axios.get(TASKS_API);
         if (taskRes.data && Array.isArray(taskRes.data)) {
           const userTasks = taskRes.data.filter(t => t.description === currentUser);
           setTasks(userTasks);

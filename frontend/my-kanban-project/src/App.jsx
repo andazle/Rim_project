@@ -7,9 +7,11 @@ import { ensureColumns } from './api';
 import DashboardPage from './pages/DashboardPage';
 import SchemePage from './pages/SchemePage';
 
-const BACKEND_URL = 'https://rim-project-2.onrender.com';
-const BASE_URL = `${BACKEND_URL}/api/v1`;
+const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://127.0.0.1:8000'
+  : 'https://rim-project-2.onrender.com';
 
+const BASE_URL = `${BACKEND_URL}/api/v1`;
 const LOGIN_API = `${BACKEND_URL}/api/token/`;
 const REGISTER_API = `${BASE_URL}/register/`;
 const TASKS_API = `${BASE_URL}/tasks/`;
@@ -87,7 +89,7 @@ const Register = () => {
         password: formData.password,
         password_confirm: formData.password_confirm
       });
-      alert('Регистрация прошла успешно! Теперь вы можете войти в систему.');
+      alert('Registration successful! Now you can log in.');
       navigate('/login');
     } catch (err) {
       console.error("Детали ошибки:", err.response);
@@ -150,25 +152,20 @@ const KanbanBoard = () => {
       try {
         setLoading(true);
 
-        console.log("Запрашиваем колонки...");
         const currentCols = await ensureColumns();
         setColumns(currentCols);
-        console.log("Колонки загружены:", currentCols);
 
-        console.log("Запрашиваем задачи...");
         const taskRes = await axios.get(TASKS_API);
-
         if (taskRes.data && Array.isArray(taskRes.data)) {
           const userTasks = taskRes.data.filter(t => t.description === currentUser);
           setTasks(userTasks);
         }
-
       } catch (err) {
-        console.error("Критическая ошибка при загрузке доски:", err);
+        console.error("Ошибка загрузки данных:", err);
 
         if (err.response && err.response.status === 401) {
           localStorage.removeItem('token');
-          alert("Сессия устарела. Пожалуйста, войдите заново.");
+          alert("Сессия устарела. Пожалуйста, войдите в систему заново.");
           navigate('/login');
           return;
         }
@@ -178,7 +175,7 @@ const KanbanBoard = () => {
           : err.message;
         const status = err.response?.status ? `[Статус ${err.response.status}] ` : '';
 
-        alert(`Ошибка загрузки данных! ${status}${errorDetail}`);
+        alert(`Ошибка загрузки доски! ${status}${errorDetail}`);
       } finally {
         setLoading(false);
       }
@@ -190,15 +187,13 @@ const KanbanBoard = () => {
     if (!newTaskTitle.trim() || columns.length === 0) return;
 
     try {
-      console.log("ID первой колонки:", columns[0].id);
-
       let formattedDeadline = null;
       if (newTaskDeadline) {
         const parsedDate = new Date(newTaskDeadline);
         if (!isNaN(parsedDate.getTime())) {
           formattedDeadline = parsedDate.toISOString();
         } else {
-          alert("Пожалуйста, введите корректную дату и время дедлайна.");
+          alert("Пожалуйста, введите корректную дату дедлайна.");
           return;
         }
       }
@@ -213,23 +208,38 @@ const KanbanBoard = () => {
       setTasks(prev => [...prev, res.data]);
       setNewTaskTitle('');
     } catch (e) {
-      console.error("Полная ошибка при создании задачи:", e);
+      console.error("Ошибка при создании задачи:", e);
+      alert(`Ошибка при создании: ${e.response?.data ? JSON.stringify(e.response.data) : e.message}`);
+    }
+  };
 
-      const errorMsg = e.response?.data
-        ? JSON.stringify(e.response.data)
-        : e.message || "Локальная ошибка кода";
+  const moveTask = async (taskId, currentColumnId) => {
+    const currentIdx = columns.findIndex(col => col.id === currentColumnId);
+    const nextColumn = columns[currentIdx + 1];
 
-      alert(`Ошибка при создании: ${errorMsg}`);
+    if (!nextColumn) return;
+
+    try {
+      await axios.patch(`${TASKS_API}${taskId}/`, {
+        column: nextColumn.id
+      });
+      setTasks(prevTasks =>
+        prevTasks.map(t => (t.id === taskId ? { ...t, column: nextColumn.id } : t))
+      );
+    } catch (e) {
+      console.error("Ошибка изменения колонки задачи:", e);
+      alert("Не удалось переместить задачу!");
     }
   };
 
   const deleteTask = async (taskId) => {
     try {
       await axios.delete(`${TASKS_API}${taskId}/`);
+      setTasks(tasks.filter(t => t.id !== taskId));
     } catch (e) {
-      console.error(e);
+      console.error("Ошибка удаления задачи:", e);
+      alert("Не удалось удалить задачу");
     }
-    setTasks(tasks.filter(t => t.id !== taskId));
   };
 
   if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}><h2>Загрузка доски...</h2></div>;

@@ -161,7 +161,16 @@ const KanbanBoard = () => {
 
         const taskRes = await axios.get(TASKS_API);
         if (taskRes.data && Array.isArray(taskRes.data)) {
-          const userTasks = taskRes.data.filter(t => t.description === currentUser);
+          const userTasks = taskRes.data
+            .filter(t => t.description && t.description.startsWith(currentUser))
+            .map(t => {
+              let tags = [];
+              if (t.description.includes('|')) {
+                const parts = t.description.split('|');
+                tags = parts[1].split(',').map(tag => tag.trim()).filter(Boolean);
+              }
+              return { ...t, tags };
+            });
           setTasks(userTasks);
         }
       } catch (err) {
@@ -202,17 +211,24 @@ const KanbanBoard = () => {
         }
       }
 
-      const tagsPayload = newTaskTags.split(',').map(t => t.trim()).filter(Boolean);
+      const cleanTags = newTaskTags.split(',').map(t => t.trim()).filter(Boolean);
+      const descriptionWithTags = cleanTags.length > 0
+        ? `${currentUser}|${cleanTags.join(',')}`
+        : currentUser;
 
       const res = await axios.post(TASKS_API, {
         title: newTaskTitle,
-        description: currentUser,
+        description: descriptionWithTags,
         column: columns[0].id,
-        deadline: formattedDeadline,
-        tags: tagsPayload
+        deadline: formattedDeadline
       });
 
-      setTasks(prev => [...prev, res.data]);
+      const newTaskObject = {
+        ...res.data,
+        tags: cleanTags
+      };
+
+      setTasks(prev => [...prev, newTaskObject]);
       setNewTaskTitle('');
       setNewTaskTags('');
       setDeadlineDate('');
@@ -270,10 +286,7 @@ const KanbanBoard = () => {
     if (!query) return true;
 
     const matchesTitle = task.title?.toLowerCase().includes(query);
-
-    const tagsArray = task.tags
-      ? (Array.isArray(task.tags) ? task.tags : task.tags.split(',').map(t => t.trim()).filter(Boolean))
-      : [];
+    const tagsArray = task.tags || [];
     const matchesTags = tagsArray.some(tag => tag.toLowerCase().includes(query));
 
     return matchesTitle || matchesTags;

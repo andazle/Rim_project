@@ -155,7 +155,7 @@ export default function DashboardPage() {
 
   const formatDate = (isoString) => {
     const d = new Date(isoString);
-    return `${d.toLocaleDateString()} в ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    return `${d.toLocaleDateString()} в ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
   };
 
   const handleClearLogs = () => {

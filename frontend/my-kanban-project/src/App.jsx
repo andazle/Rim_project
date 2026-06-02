@@ -295,15 +295,22 @@ const KanbanBoard = () => {
           <div key={col.id} className="column">
             <h3 style={{ borderBottom: '2px solid #ccc', paddingBottom: '10px' }}>{col.title || col.name}</h3>
             <div className="task-list">
-              {tasks.filter(t => (col.aliasIds || [col.id]).includes(t.column)).map(task => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onMove={() => moveTask(task.id, col.id)}
-                  onDelete={() => deleteTask(task.id)}
-                  nextText={columns[idx + 1] ? "Далее" : null}
-                />
-              ))}
+              {tasks.filter(t => (col.aliasIds || [col.id]).includes(t.column)).map(task => {
+                const isColumnDone = ['готов', 'done', 'выполн'].some(w =>
+                  (col.title || col.name || '').toLowerCase().includes(w)
+                );
+
+                return (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onMove={() => moveTask(task.id, col.id)}
+                    onDelete={() => deleteTask(task.id)}
+                    nextText={columns[idx + 1] ? "Далее" : null}
+                    isDone={isColumnDone}
+                  />
+                );
+              })}
             </div>
           </div>
         ))}

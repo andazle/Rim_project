@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-export const TaskCard = ({ task, onMove, onDelete, nextText }) => {
+export const TaskCard = ({ task, onMove, onDelete, nextText, isDone }) => {
   const colors = [
     { name: 'По умолчанию', value: '#ffffff' },
     { name: 'Важно', value: '#ffcccb' },
@@ -14,6 +14,18 @@ export const TaskCard = ({ task, onMove, onDelete, nextText }) => {
     return savedColors[task.id] || '#ffffff';
   });
 
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    if (!task.deadline || isDone) return;
+
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [task.deadline, isDone]);
+
   const handleColorChange = (colorValue) => {
     setCardColor(colorValue);
     const savedColors = JSON.parse(localStorage.getItem('task_colors') || '{}');
@@ -21,7 +33,13 @@ export const TaskCard = ({ task, onMove, onDelete, nextText }) => {
     localStorage.setItem('task_colors', JSON.stringify(savedColors));
   };
 
-  const displayDeadline = task.deadline
+  const hasDeadline = !!task.deadline;
+  const isOverdue = hasDeadline && new Date(task.deadline).getTime() < currentTime;
+
+  const deadlineColor = isDone ? '#198754' : (isOverdue ? '#dc3545' : '#198754');
+  const deadlineText = isDone ? 'Выполнено' : (isOverdue ? 'Просрочено' : 'В процессе');
+
+  const displayDeadline = hasDeadline
     ? new Date(task.deadline).toLocaleDateString()
     : null;
 
@@ -41,7 +59,7 @@ export const TaskCard = ({ task, onMove, onDelete, nextText }) => {
         <h4 style={{ margin: 0, fontSize: '16px', color: '#333' }}>{task.title}</h4>
         <button
           onClick={onDelete}
-          style={{ background: 'none', border: 'none', color: '#dc3545', cursor: 'pointer', fontSize: '16px' }}
+          style={{ background: 'none', border: 'none', color: '#dc3545', cursor: 'pointer', fontSize: '14px' }}
           title="Удалить задачу"
         >
           Удалить
@@ -49,8 +67,23 @@ export const TaskCard = ({ task, onMove, onDelete, nextText }) => {
       </div>
 
       {displayDeadline && (
-        <div style={{ fontSize: '12px', color: '#858796' }}>
-          Дедлайн: {displayDeadline}
+        <div style={{
+          fontSize: '12px',
+          color: deadlineColor,
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px'
+        }}>
+          <span style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: deadlineColor,
+            display: 'inline-block',
+            transition: 'background-color 0.5s ease'
+          }} />
+          Дедлайн: {displayDeadline} ({deadlineText})
         </div>
       )}
 

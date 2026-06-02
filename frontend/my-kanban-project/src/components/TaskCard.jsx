@@ -40,7 +40,7 @@ export const TaskCard = ({ task, onMove, onDelete, nextText, isDone }) => {
   const deadlineText = isDone ? 'Выполнено' : (isOverdue ? 'Просрочено' : 'В процессе');
 
   const displayDeadline = hasDeadline
-    ? new Date(task.deadline).toLocaleDateString()
+    ? `${new Date(task.deadline).toLocaleDateString()} в ${new Date(task.deadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
     : null;
 
   return (

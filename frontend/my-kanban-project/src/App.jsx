@@ -281,7 +281,7 @@ const KanbanBoard = () => {
             style={{ width: '250px' }}
           />
           <input
-            type="date"
+            type="datetime-local"
             value={newTaskDeadline}
             onChange={e => setNewTaskDeadline(e.target.value)}
             style={{ width: '150px' }}

@@ -12,7 +12,6 @@ import {
 
 const CHART_COLORS = ['#1976d2', '#9c27b0', '#2e7d32', '#ed6c02', '#d32f2f'];
 
-/** Демо-данные на случай, если сервер недоступен или задач нет. */
 const DEMO = {
   total: 35, done: 15, inProgress: 8, overdue: 4, rate: 42.9,
   byStatus: [
@@ -32,19 +31,15 @@ const card = (bg) => ({
   boxShadow: '0 2px 8px rgba(0,0,0,0.08)', flex: '1 1 200px',
 });
 
-/** Содержит ли название колонки одно из ключевых слов. */
 const matches = (title, words) =>
   !!title && words.some((w) => title.toLowerCase().includes(w));
 
-/** Рассчитать статистику по набору задач и колонок. */
 const computeStats = (columns, tasks) => {
   const colById = new Map(columns.map((c) => [c.id, c]));
   const done = tasks.filter((t) => matches(colById.get(t.column)?.title, ['готов', 'done', 'выполн']));
   const inProgress = tasks.filter((t) => matches(colById.get(t.column)?.title, ['работ', 'progress']));
   const overdue = tasks.filter((t) => isOverdue(t) && !done.includes(t));
 
-  // Распределение по статусам: группируем по НАЗВАНИЮ колонки,
-  // чтобы возможные дубли колонок объединялись в один сектор.
   const statusCounts = {};
   tasks.forEach((t) => {
     const status = colById.get(t.column)?.title || '—';
@@ -52,7 +47,6 @@ const computeStats = (columns, tasks) => {
   });
   const byStatus = Object.entries(statusCounts).map(([status, count]) => ({ status, count }));
 
-  // Группировка по участникам: в этом проекте автор задачи хранится в поле description.
   const userCounts = {};
   tasks.forEach((t) => {
     const user = (t.description && t.description.trim()) || 'без автора';
@@ -108,7 +102,6 @@ export default function DashboardPage() {
 
   const currentUser = getCurrentUser();
 
-  // Пересчитываем статистику при смене области просмотра.
   const stats = useMemo(() => {
     if (allTasks.length === 0) return null;
     const tasks = scope === 'mine'

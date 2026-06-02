@@ -82,7 +82,8 @@ const Register = () => {
     try {
       await axios.post(REGISTER_API, {
         username: formData.username,
-        password: formData.password
+        password: formData.password,
+        password_confirm: formData.password_confirm
       });
       alert('Регистрация прошла успешно! Теперь вы можете войти в систему.');
       navigate('/login');

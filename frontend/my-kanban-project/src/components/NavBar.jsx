@@ -3,10 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { getCurrentUser } from '../api';
 
-/**
- * Верхняя панель навигации, общая для всех внутренних страниц
- * (Доска, Дэшборд, Интерактивная схема) с кнопкой выхода.
- */
 export function NavBar() {
   const navigate = useNavigate();
   const location = useLocation();

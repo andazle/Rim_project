@@ -61,11 +61,21 @@ const Register = () => {
   const [formData, setFormData] = useState({ username: '', password: '', password_confirm: '' });
   const navigate = useNavigate();
 
+  const isPasswordStrong = (password) => {
+    const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
+    return regex.test(password);
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
 
     if (formData.password !== formData.password_confirm) {
       alert("Пароли не совпадают!");
+      return;
+    }
+
+    if (!isPasswordStrong(formData.password)) {
+      alert("Пароль слишком слабый! Он должен содержать минимум 8 символов, хотя бы одну латинскую букву и одну цифру.");
       return;
     }
 
@@ -77,13 +87,9 @@ const Register = () => {
       alert('Регистрация прошла успешно! Теперь вы можете войти в систему.');
       navigate('/login');
     } catch (err) {
-      console.error("Ошибка регистрации:", err.response?.data);
-      const serverError = err.response?.data?.error || err.response?.data?.detail;
-      if (serverError) {
-        alert("Ошибка сервера: " + serverError);
-      } else {
-        alert("Используйте только английские буквы/цифры. Пароль должен быть надежным (от 8 символов, не только цифры).");
-      }
+      console.error("Детали ошибки:", err.response);
+      const msg = err.response?.data?.detail || err.response?.data?.error || JSON.stringify(err.response?.data);
+      alert("Ошибка при регистрации: " + msg);
     }
   };
 

@@ -71,11 +71,14 @@ export const TaskCard = ({ task, onMove, onDelete, nextText, isDone }) => {
 
       {tagsArray.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-          {tagsArray.map((tag, i) => (
-            <span key={i} style={{ background: '#e9ecef', color: '#495057', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: '500' }}>
-              #{tag}
-            </span>
-          ))}
+          {tagsArray.map((tag, i) => {
+            const cleanTag = tag.startsWith('#') ? tag : `#${tag}`;
+            return (
+              <span key={i} style={{ background: '#e9ecef', color: '#495057', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: '500' }}>
+                {cleanTag}
+              </span>
+            );
+          })}
         </div>
       )}
 

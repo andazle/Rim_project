@@ -63,7 +63,10 @@ const computeStats = (columns, tasks) => {
 
   const userCounts = {};
   tasks.forEach((t) => {
-    const user = (t.description && t.description.trim()) || 'без автора';
+    let user = (t.description && t.description.trim()) || 'без автора';
+    if (user.includes('|')) {
+      user = user.split('|')[0].trim();
+    }
     userCounts[user] = (userCounts[user] || 0) + 1;
   });
   const byUser = Object.entries(userCounts).map(([user, count]) => ({ user, count }));
@@ -140,7 +143,7 @@ export default function DashboardPage() {
   const stats = useMemo(() => {
     if (allTasks.length === 0) return null;
     const tasks = scope === 'mine'
-      ? allTasks.filter((t) => t.description === currentUser)
+      ? allTasks.filter((t) => t.description && t.description.startsWith(currentUser))
       : allTasks;
     if (tasks.length === 0) return computeStats(columns, []);
     return computeStats(columns, tasks);

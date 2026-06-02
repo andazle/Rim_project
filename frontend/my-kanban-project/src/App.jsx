@@ -7,11 +7,9 @@ import { ensureColumns } from './api';
 import DashboardPage from './pages/DashboardPage';
 import SchemePage from './pages/SchemePage';
 
-const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? 'http://127.0.0.1:8000'
-  : 'https://rim-project-2.onrender.com';
-
+const BACKEND_URL = 'https://rim-project-2.onrender.com';
 const BASE_URL = `${BACKEND_URL}/api/v1`;
+
 const LOGIN_API = `${BACKEND_URL}/api/token/`;
 const REGISTER_API = `${BASE_URL}/register/`;
 const TASKS_API = `${BASE_URL}/tasks/`;

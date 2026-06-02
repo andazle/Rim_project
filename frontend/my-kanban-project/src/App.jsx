@@ -159,23 +159,19 @@ const KanbanBoard = () => {
         }
       } catch (err) {
         console.error("Ошибка загрузки:", err);
-        alert("Не удалось загрузить доску. Проверьте, что сервер запущен.");
+
+        const errorDetail = err.response?.data
+          ? JSON.stringify(err.response.data)
+          : err.message;
+        const status = err.response?.status ? `[Статус ${err.response.status}] ` : '';
+
+        alert(`Ошибка загрузки доски! ${status}${errorDetail}`);
       } finally {
         setLoading(false);
       }
     }
     loadData();
   }, [navigate, currentUser]);
-
-  const moveTask = async (taskId, currentColumnId) => {
-    const currentIndex = columns.findIndex(c => c.id === currentColumnId);
-    const nextColumn = columns[currentIndex + 1];
-    if (!nextColumn) return;
-    try {
-      await axios.patch(`${TASKS_API}${taskId}/`, { column: nextColumn.id });
-      setTasks(tasks.map(t => t.id === taskId ? { ...t, column: nextColumn.id } : t));
-    } catch (e) { console.error(e); }
-  };
 
   const addTask = async () => {
     if (!newTaskTitle.trim() || columns.length === 0) return;

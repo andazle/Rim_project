@@ -131,13 +131,17 @@ const Register = () => {
 };
 
 const KanbanBoard = () => {
+  const navigate = useNavigate();
+  const currentUser = localStorage.getItem('username') || '';
   const [tasks, setTasks] = useState([]);
   const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDeadline, setNewTaskDeadline] = useState(new Date().toISOString().split('T')[0]);
-  const navigate = useNavigate();
-  const currentUser = localStorage.getItem('username') || 'guest';
+  const [newTaskTags, setNewTaskTags] = useState('');
+  const [deadlineDate, setDeadlineDate] = useState('');
+  const [deadlineTime, setDeadlineTime] = useState('23:59');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     async function loadData() {
@@ -188,8 +192,8 @@ const KanbanBoard = () => {
 
     try {
       let formattedDeadline = null;
-      if (newTaskDeadline) {
-        const parsedDate = new Date(newTaskDeadline);
+      if (deadlineDate) {
+        const parsedDate = new Date(`${deadlineDate}T${deadlineTime || '00:00'}:00`);
         if (!isNaN(parsedDate.getTime())) {
           formattedDeadline = parsedDate.toISOString();
         } else {
@@ -198,15 +202,21 @@ const KanbanBoard = () => {
         }
       }
 
+      const tagsPayload = newTaskTags.split(',').map(t => t.trim()).filter(Boolean);
+
       const res = await axios.post(TASKS_API, {
         title: newTaskTitle,
         description: currentUser,
         column: columns[0].id,
-        deadline: formattedDeadline
+        deadline: formattedDeadline,
+        tags: tagsPayload
       });
 
       setTasks(prev => [...prev, res.data]);
       setNewTaskTitle('');
+      setNewTaskTags('');
+      setDeadlineDate('');
+      setDeadlineTime('23:59');
     } catch (e) {
       console.error("Ошибка при создании задачи:", e);
       alert(`Ошибка при создании: ${e.response?.data ? JSON.stringify(e.response.data) : e.message}`);
@@ -255,14 +265,28 @@ const KanbanBoard = () => {
     }
   };
 
+  const filteredTasks = tasks.filter(task => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+
+    const matchesTitle = task.title?.toLowerCase().includes(query);
+
+    const tagsArray = task.tags
+      ? (Array.isArray(task.tags) ? task.tags : task.tags.split(',').map(t => t.trim()).filter(Boolean))
+      : [];
+    const matchesTags = tagsArray.some(tag => tag.toLowerCase().includes(query));
+
+    return matchesTitle || matchesTags;
+  });
+
   if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}><h2>Загрузка доски...</h2></div>;
 
   return (
     <div className="app-container">
       <style>{`
         body { margin: 0; background-color: #f0f2f5; font-family: sans-serif; }
-        .header { text-align: center; padding: 30px; position: relative; }
-        .input-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .header { text-align: center; padding: 30px; position: relative; display: flex; flex-direction: column; gap: 15px; }
+        .input-group { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
         .input-group input { padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
         .board { display: flex; gap: 20px; justify-content: center; padding: 20px; overflow-x: auto; }
         .column { background: #ebecf0; width: 300px; padding: 15px; border-radius: 10px; min-height: 400px; }
@@ -272,21 +296,42 @@ const KanbanBoard = () => {
       <NavBar />
 
       <div className="header">
-        <h1>Project 17 Kanban</h1>
-        <div className="input-group">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1240px', margin: '0 auto', width: '100%', flexWrap: 'wrap', gap: '15px' }}>
+          <h1 style={{ margin: 0 }}>Project 17 Kanban</h1>
+          <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Поиск по названию или тегам..."
+            style={{ width: '300px', padding: '10px 15px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '14px' }}
+          />
+        </div>
+
+        <div className="input-group" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <input
             value={newTaskTitle}
             onChange={e => setNewTaskTitle(e.target.value)}
             placeholder="Название задачи..."
-            style={{ width: '250px' }}
+            style={{ width: '220px' }}
           />
           <input
-            type="datetime-local"
-            value={newTaskDeadline}
-            onChange={e => setNewTaskDeadline(e.target.value)}
-            style={{ width: '150px' }}
+            value={newTaskTags}
+            onChange={e => setNewTaskTags(e.target.value)}
+            placeholder="Теги (через запятую)..."
+            style={{ width: '180px' }}
           />
-          <button onClick={addTask} style={{ padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Создать</button>
+          <input
+            type="date"
+            value={deadlineDate}
+            onChange={e => setDeadlineDate(e.target.value)}
+            style={{ width: '140px' }}
+          />
+          <input
+            type="time"
+            value={deadlineTime}
+            onChange={e => setDeadlineTime(e.target.value)}
+            style={{ width: '90px' }}
+          />
+          <button onClick={addTask} style={{ padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Создать</button>
         </div>
       </div>
 
@@ -295,7 +340,7 @@ const KanbanBoard = () => {
           <div key={col.id} className="column">
             <h3 style={{ borderBottom: '2px solid #ccc', paddingBottom: '10px' }}>{col.title || col.name}</h3>
             <div className="task-list">
-              {tasks.filter(t => (col.aliasIds || [col.id]).includes(t.column)).map(task => {
+              {filteredTasks.filter(t => (col.aliasIds || [col.id]).includes(t.column)).map(task => {
                 const isColumnDone = ['готов', 'done', 'выполн'].some(w =>
                   (col.title || col.name || '').toLowerCase().includes(w)
                 );

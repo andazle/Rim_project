@@ -43,6 +43,10 @@ export const TaskCard = ({ task, onMove, onDelete, nextText, isDone }) => {
     ? `${new Date(task.deadline).toLocaleDateString()} в ${new Date(task.deadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
     : null;
 
+  const tagsArray = task.tags
+    ? (Array.isArray(task.tags) ? task.tags : task.tags.split(',').map(t => t.trim()).filter(Boolean))
+    : [];
+
   return (
     <div style={{
       background: cardColor,
@@ -60,11 +64,20 @@ export const TaskCard = ({ task, onMove, onDelete, nextText, isDone }) => {
         <button
           onClick={onDelete}
           style={{ background: 'none', border: 'none', color: '#dc3545', cursor: 'pointer', fontSize: '14px' }}
-          title="Удалить задачу"
         >
           Удалить
         </button>
       </div>
+
+      {tagsArray.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+          {tagsArray.map((tag, i) => (
+            <span key={i} style={{ background: '#e9ecef', color: '#495057', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: '500' }}>
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
 
       {displayDeadline && (
         <div style={{

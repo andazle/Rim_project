@@ -179,20 +179,38 @@ const KanbanBoard = () => {
 
   const addTask = async () => {
     if (!newTaskTitle.trim() || columns.length === 0) return;
+
     try {
       console.log("ID первой колонки:", columns[0].id);
+
+      let formattedDeadline = null;
+      if (newTaskDeadline) {
+        const parsedDate = new Date(newTaskDeadline);
+        if (!isNaN(parsedDate.getTime())) {
+          formattedDeadline = parsedDate.toISOString();
+        } else {
+          alert("Пожалуйста, введите корректную дату и время дедлайна.");
+          return;
+        }
+      }
 
       const res = await axios.post(TASKS_API, {
         title: newTaskTitle,
         description: currentUser,
         column: columns[0].id,
-        deadline: new Date(newTaskDeadline).toISOString()
+        deadline: formattedDeadline
       });
+
       setTasks(prev => [...prev, res.data]);
       setNewTaskTitle('');
     } catch (e) {
-      console.error("Ошибка при создании:", e.response?.data);
-      alert(`Ошибка сервера при создании: ${JSON.stringify(e.response?.data)}`);
+      console.error("Полная ошибка при создании задачи:", e);
+
+      const errorMsg = e.response?.data
+        ? JSON.stringify(e.response.data)
+        : e.message || "Локальная ошибка кода";
+
+      alert(`Ошибка при создании: ${errorMsg}`);
     }
   };
 

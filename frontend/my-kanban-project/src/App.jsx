@@ -211,7 +211,12 @@ const KanbanBoard = () => {
         }
       }
 
-      const cleanTags = newTaskTags.split(',').map(t => t.trim()).filter(Boolean);
+      // Убираем дублирование решёток и чистим пробелы
+      const cleanTags = newTaskTags
+        .split(',')
+        .map(t => t.trim().replace(/^#+/, ''))
+        .filter(Boolean);
+
       const descriptionWithTags = cleanTags.length > 0
         ? `${currentUser}|${cleanTags.join(',')}`
         : currentUser;
@@ -272,8 +277,29 @@ const KanbanBoard = () => {
   };
 
   const deleteTask = async (taskId) => {
+    const taskToDelete = tasks.find(t => t.id === taskId);
+    const taskTitle = taskToDelete?.title || 'Без названия';
+
+    if (!window.confirm(`Вы уверены, что хотите удалить задачу "${taskTitle}"?`)) {
+      return;
+    }
+
     try {
       await axios.delete(`${TASKS_API}${taskId}/`);
+
+      const timestamp = new Date().toISOString();
+      const logEntry = {
+        taskId,
+        taskTitle: taskTitle,
+        fromColumn: 'Находилась на доске',
+        toColumn: 'Удалена',
+        movedAt: timestamp
+      };
+
+      const existingLogs = JSON.parse(localStorage.getItem('task_time_logs') || '[]');
+      existingLogs.push(logEntry);
+      localStorage.setItem('task_time_logs', JSON.stringify(existingLogs));
+
       setTasks(tasks.filter(t => t.id !== taskId));
     } catch (e) {
       console.error("Ошибка удаления задачи:", e);

@@ -89,7 +89,7 @@ const Register = () => {
         password: formData.password,
         password_confirm: formData.password_confirm
       });
-      alert('Registration successful! Now you can log in.');
+      alert('Регистрация прошла успешно! Теперь вы можете войти в систему.');
       navigate('/login');
     } catch (err) {
       console.error("Детали ошибки:", err.response);

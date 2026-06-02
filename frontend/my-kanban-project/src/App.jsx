@@ -7,8 +7,8 @@ import { ensureColumns } from './api';
 import DashboardPage from './pages/DashboardPage';
 import SchemePage from './pages/SchemePage';
 
-const BASE_URL = 'https://rim-project-2.onrender.com/api/v1';
-const LOGIN_API = 'https://rim-project-2.onrender.com/api/token/';
+const BASE_URL = 'https://rim-project-3.onrender.com/api/v1';
+const LOGIN_API = 'https://rim-project-3.onrender.com/api/token/';
 const REGISTER_API = `${BASE_URL}/register/`;
 const TASKS_API = `${BASE_URL}/tasks/`;
 

@@ -1,15 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NavBar } from '../components/NavBar';
-import {
-  applyAuthHeader, fetchUserTasks, saveTaskPosition, clearTaskPosition,
-} from '../api';
+import { applyAuthHeader, fetchTasks } from '../api';
 
 export default function SchemePage() {
   const navigate = useNavigate();
   const [image, setImage] = useState(() => localStorage.getItem('scheme_image') || null);
   const [tasks, setTasks] = useState([]);
-  const [markers, setMarkers] = useState([]); // { taskId, x, y, title }
+  const [markers, setMarkers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState('');
 
@@ -32,15 +30,17 @@ export default function SchemePage() {
     let active = true;
     (async () => {
       try {
-        const data = await fetchUserTasks();
+        const allTasks = await fetchTasks();
         if (!active) return;
-        setTasks(data);
-        setMarkers(
-          data
-            .filter((t) => t.x_pos != null && t.y_pos != null)
-            .map((t) => ({ taskId: Number(t.id), x: t.x_pos, y: t.y_pos, title: t.title }))
-        );
-      } catch {
+
+        const currentUser = localStorage.getItem('username') || '';
+        const userTasks = allTasks.filter(t => t.description && t.description.startsWith(currentUser));
+        setTasks(userTasks);
+
+        const savedMarkers = JSON.parse(localStorage.getItem('scheme_markers') || '[]');
+        setMarkers(savedMarkers);
+      } catch (e) {
+        console.error(e);
         notify('Не удалось загрузить задачи');
       } finally {
         if (active) setLoading(false);
@@ -73,34 +73,30 @@ export default function SchemePage() {
     (t) => !markers.some((m) => Number(m.taskId) === Number(t.id))
   );
 
-  const confirmMarker = async () => {
+  const confirmMarker = () => {
     if (!pendingPos || selectedTaskId === '') return;
     const targetId = Number(selectedTaskId);
     const task = tasks.find((t) => Number(t.id) === targetId);
     if (!task) return;
-    try {
-      await saveTaskPosition(task.id, pendingPos.x, pendingPos.y);
-      setMarkers((prev) => [
-        ...prev.filter((m) => Number(m.taskId) !== task.id),
-        { taskId: task.id, x: pendingPos.x, y: pendingPos.y, title: task.title },
-      ]);
-      notify('Метка сохранена');
-      setPendingPos(null);
-      setSelectedTaskId('');
-    } catch {
-      notify('Ошибка保存ения метки');
-    }
+
+    // Сохраняем метку локально, чтобы не зависеть от полей x_pos/y_pos в бэкенде
+    const newMarker = { taskId: task.id, x: pendingPos.x, y: pendingPos.y, title: task.title };
+    const updatedMarkers = [...markers.filter((m) => Number(m.taskId) !== task.id), newMarker];
+
+    setMarkers(updatedMarkers);
+    localStorage.setItem('scheme_markers', JSON.stringify(updatedMarkers));
+
+    notify('Метка сохранена');
+    setPendingPos(null);
+    setSelectedTaskId('');
   };
 
-  const removeMarker = async (taskId) => {
+  const removeMarker = (taskId) => {
     const targetId = Number(taskId);
-    try {
-      await clearTaskPosition(targetId);
-      setMarkers((prev) => prev.filter((m) => Number(m.taskId) !== targetId));
-      notify('Метка удалена');
-    } catch {
-      notify('Ошибка удаления метки');
-    }
+    const updatedMarkers = markers.filter((m) => Number(m.taskId) !== targetId);
+    setMarkers(updatedMarkers);
+    localStorage.setItem('scheme_markers', JSON.stringify(updatedMarkers));
+    notify('Метка удалена');
   };
 
   return (

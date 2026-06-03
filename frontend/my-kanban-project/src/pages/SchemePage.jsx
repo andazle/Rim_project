@@ -7,7 +7,7 @@ import {
 
 export default function SchemePage() {
   const navigate = useNavigate();
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState(() => localStorage.getItem('scheme_image') || null);
   const [tasks, setTasks] = useState([]);
   const [markers, setMarkers] = useState([]); // { taskId, x, y, title }
   const [loading, setLoading] = useState(true);
@@ -38,7 +38,7 @@ export default function SchemePage() {
         setMarkers(
           data
             .filter((t) => t.x_pos != null && t.y_pos != null)
-            .map((t) => ({ taskId: t.id, x: t.x_pos, y: t.y_pos, title: t.title }))
+            .map((t) => ({ taskId: Number(t.id), x: t.x_pos, y: t.y_pos, title: t.title }))
         );
       } catch {
         notify('Не удалось загрузить задачи');
@@ -53,7 +53,11 @@ export default function SchemePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => { setImage(ev.target.result); notify('Изображение загружено'); };
+    reader.onload = (ev) => {
+      setImage(ev.target.result);
+      localStorage.setItem('scheme_image', ev.target.result);
+      notify('Изображение загружено');
+    };
     reader.readAsDataURL(file);
   };
 
@@ -66,31 +70,33 @@ export default function SchemePage() {
   };
 
   const availableTasks = tasks.filter(
-    (t) => !markers.some((m) => m.taskId === t.id)
+    (t) => !markers.some((m) => Number(m.taskId) === Number(t.id))
   );
 
   const confirmMarker = async () => {
     if (!pendingPos || selectedTaskId === '') return;
-    const task = tasks.find((t) => t.id === Number(selectedTaskId));
+    const targetId = Number(selectedTaskId);
+    const task = tasks.find((t) => Number(t.id) === targetId);
     if (!task) return;
     try {
       await saveTaskPosition(task.id, pendingPos.x, pendingPos.y);
       setMarkers((prev) => [
-        ...prev.filter((m) => m.taskId !== task.id),
+        ...prev.filter((m) => Number(m.taskId) !== task.id),
         { taskId: task.id, x: pendingPos.x, y: pendingPos.y, title: task.title },
       ]);
       notify('Метка сохранена');
       setPendingPos(null);
       setSelectedTaskId('');
     } catch {
-      notify('Ошибка сохранения метки');
+      notify('Ошибка保存ения метки');
     }
   };
 
   const removeMarker = async (taskId) => {
+    const targetId = Number(taskId);
     try {
-      await clearTaskPosition(taskId);
-      setMarkers((prev) => prev.filter((m) => m.taskId !== taskId));
+      await clearTaskPosition(targetId);
+      setMarkers((prev) => prev.filter((m) => Number(m.taskId) !== targetId));
       notify('Метка удалена');
     } catch {
       notify('Ошибка удаления метки');
@@ -134,8 +140,8 @@ export default function SchemePage() {
               <>
                 <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center' }}>
                   <button
-                    onClick={() => { setImage(null); fileInputRef.current.value = ''; }}
-                    style={{ padding: '8px 16px', background: '#f0f2f5', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer' }}
+                    onClick={() => { setImage(null); localStorage.removeItem('scheme_image'); fileInputRef.current.value = ''; }}
+                    style={{ padding: '8px 16px', background: '#fff', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer' }}
                   >
                     Заменить схему
                   </button>
@@ -160,7 +166,7 @@ export default function SchemePage() {
                       <div
                         title={m.title}
                         style={{
-                          width: '22px', height: '22px', background: '#007bff',
+                          width: '22px', height: '22px', background: '#e14eca',
                           border: '2px solid white', borderRadius: '50%', boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
                         }}
                       />
@@ -199,7 +205,7 @@ export default function SchemePage() {
                 >
                   <h3 style={{ marginTop: 0 }}>Привязать задачу к точке</h3>
                   {availableTasks.length === 0 ? (
-                    <p style={{ color: '#888' }}>Нет свободных задач. Создайте задачи на доске.</p>
+                    <p style={{ color: '#888' }}>Нет свободных задач. Перейдите на доску и создайте новые.</p>
                   ) : (
                     <select
                       value={selectedTaskId}

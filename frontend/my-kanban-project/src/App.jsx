@@ -2,23 +2,26 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { TaskCard } from './components/TaskCard';
+import { NavBar } from './components/NavBar';
+import { ensureColumns } from './api';
+import DashboardPage from './pages/DashboardPage';
+import SchemePage from './pages/SchemePage';
 
-const BASE_URL = 'http://127.0.0.1:8000/api/v1';
-const LOGIN_API = 'http://127.0.0.1:8000/api/token/';
-const REGISTER_API = `${BASE_URL}/register/`; 
+const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://127.0.0.1:8000'
+  : 'https://rim-project-2.onrender.com';
+
+const BASE_URL = `${BACKEND_URL}/api/v1`;
+const LOGIN_API = `${BACKEND_URL}/api/token/`;
+const REGISTER_API = `${BASE_URL}/register/`;
 const TASKS_API = `${BASE_URL}/tasks/`;
-const COLUMNS_API = `${BASE_URL}/columns/`;
 
 const Login = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ username: '', password: '' });
   const navigate = useNavigate();
 
-  const handleAuth = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-
-    const API_URL = isLogin ? LOGIN_API : REGISTER_API;
-
     try {
       const res = await axios.post(LOGIN_API, formData);
       localStorage.setItem('token', res.data.access);
@@ -26,34 +29,24 @@ const Login = () => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.access}`;
       navigate('/kanban');
     } catch (err) {
-      console.error("Ошибка авторизации:", err.response?.data);
-      if (isLogin) {
-        alert('Неверный логин или пароль!');
-      } else {
-        const errorMsg = err.response?.data?.username || 'Ошибка регистрации! Возможно, такое имя уже занято.';
-        alert(errorMsg);
-      }
+      console.error("Ошибка входа:", err.response?.data);
+      alert('Неверный логин или пароль!');
     }
   };
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
       <div style={{ background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', width: '350px' }}>
-        {/* Динамический заголовок */}
-        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>
-          Project 17: {isLogin ? 'Вход' : 'Регистрация'}
-        </h2>
-
-        <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Project 17: Вход</h2>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <input
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             type="text" placeholder="Логин (латиница)" required
-            onChange={e => setFormData({...formData, username: e.target.value})}
+            onChange={e => setFormData({ ...formData, username: e.target.value })}
           />
           <input
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             type="password" placeholder="Пароль" required
-            value={formData.password}
             onChange={e => setFormData({ ...formData, password: e.target.value })}
           />
           <button type="submit" style={{ padding: '12px', background: '#007bff', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
@@ -72,29 +65,36 @@ const Register = () => {
   const [formData, setFormData] = useState({ username: '', password: '', password_confirm: '' });
   const navigate = useNavigate();
 
+  const isPasswordStrong = (password) => {
+    const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
+    return regex.test(password);
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.password_confirm) {
       alert("Пароли не совпадают!");
+      return;
+    }
+
+    if (!isPasswordStrong(formData.password)) {
+      alert("Пароль слишком слабый! Он должен содержать минимум 8 символов, хотя бы одну латинскую букву и одну цифру.");
       return;
     }
 
     try {
       await axios.post(REGISTER_API, {
         username: formData.username,
-        password: formData.password
+        password: formData.password,
+        password_confirm: formData.password_confirm
       });
       alert('Регистрация прошла успешно! Теперь вы можете войти в систему.');
       navigate('/login');
     } catch (err) {
-      console.error("Ошибка регистрации:", err.response?.data);
-      const serverError = err.response?.data?.error || err.response?.data?.detail;
-      if (serverError) {
-        alert("Ошибка сервера: " + serverError);
-      } else {
-        alert("Используйте только английские буквы/цифры. Пароль должен быть надежным (от 8 символов, не только цифры).");
-      }
+      console.error("Детали ошибки:", err.response);
+      const msg = err.response?.data?.detail || err.response?.data?.error || JSON.stringify(err.response?.data);
+      alert("Ошибка при регистрации: " + msg);
     }
   };
 
@@ -102,21 +102,21 @@ const Register = () => {
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
       <div style={{ background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', width: '350px' }}>
         <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Project 17: Регистрация</h2>
-        <form onSubmit={handleRegister} style={{display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <input 
+        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <input
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             type="text" placeholder="Придумайте логин (латиница)" required
-            onChange={e => setFormData({...formData, username: e.target.value})}
+            onChange={e => setFormData({ ...formData, username: e.target.value })}
           />
-          <input 
+          <input
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             type="password" placeholder="Придумайте пароль" required
-            onChange={e => setFormData({...formData, password: e.target.value})}
+            onChange={e => setFormData({ ...formData, password: e.target.value })}
           />
-          <input 
+          <input
             style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
             type="password" placeholder="Повторите пароль" required
-            onChange={e => setFormData({...formData, password_confirm: e.target.value})}
+            onChange={e => setFormData({ ...formData, password_confirm: e.target.value })}
           />
           <button type="submit" style={{ padding: '12px', background: '#28a745', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
             Создать аккаунт
@@ -125,27 +125,23 @@ const Register = () => {
             Уже зарегистрированы? Войти
           </button>
         </form>
-
-        {/* Кликабельный текст-переключатель */}
-        <p
-          onClick={() => setIsLogin(!isLogin)}
-          style={{ textAlign: 'center', marginTop: '15px', cursor: 'pointer', color: '#007bff', fontSize: '14px', userSelect: 'none' }}
-        >
-          {isLogin ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
-        </p>
       </div>
     </div>
   );
 };
 
 const KanbanBoard = () => {
+  const navigate = useNavigate();
+  const currentUser = localStorage.getItem('username') || '';
   const [tasks, setTasks] = useState([]);
   const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDeadline, setNewTaskDeadline] = useState(new Date().toISOString().split('T')[0]);
-  const navigate = useNavigate();
-  const currentUser = localStorage.getItem('username') || 'guest';
+  const [newTaskTags, setNewTaskTags] = useState('');
+  const [deadlineDate, setDeadlineDate] = useState('');
+  const [deadlineTime, setDeadlineTime] = useState('23:59');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     async function loadData() {
@@ -154,46 +150,45 @@ const KanbanBoard = () => {
         navigate('/login');
         return;
       }
-      
+
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
+
       try {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        setLoading(true);
 
-        const [colRes, taskRes] = await Promise.all([
-          axios.get(COLUMNS_API),
-          axios.get(TASKS_API)
-        ]);
-
-        let currentCols = colRes.data;
-        if (!currentCols || currentCols.length === 0) {
-          currentCols = [
-            { id: 1, title: "Нужно сделать", name: "Нужно сделать" },
-            { id: 2, title: "В работе", name: "В работе" },
-            { id: 3, title: "Готово", name: "Готово" }
-          ];
-        } else {
-          const desiredOrder = ["Нужно сделать", "В работе", "Готово"];
-          currentCols.sort((a, b) => {
-            const nameA = a.title || a.name || "";
-            const nameB = b.title || b.name || "";
-            return desiredOrder.indexOf(nameA) - desiredOrder.indexOf(nameB);
-          });
-        }
-        
+        const currentCols = await ensureColumns();
         setColumns(currentCols);
-        
+
+        const taskRes = await axios.get(TASKS_API);
         if (taskRes.data && Array.isArray(taskRes.data)) {
-          const userTasks = taskRes.data.filter(t => t.description === currentUser);
+          const userTasks = taskRes.data
+            .filter(t => t.description && t.description.startsWith(currentUser))
+            .map(t => {
+              let tags = [];
+              if (t.description.includes('|')) {
+                const parts = t.description.split('|');
+                tags = parts[1].split(',').map(tag => tag.trim()).filter(Boolean);
+              }
+              return { ...t, tags };
+            });
           setTasks(userTasks);
         }
       } catch (err) {
-        console.error("Ошибка загрузки:", err);
-        setColumns([
-          { id: 1, title: "Нужно сделать", name: "Нужно сделать" },
-          { id: 2, title: "В работе", name: "В работе" },
-          { id: 3, title: "Готово", name: "Готово" }
-        ]);
+        console.error("Ошибка загрузки данных:", err);
+
+        if (err.response && err.response.status === 401) {
+          localStorage.removeItem('token');
+          alert("Сессия устарела. Пожалуйста, войдите в систему заново.");
+          navigate('/login');
+          return;
+        }
+
+        const errorDetail = err.response?.data
+          ? JSON.stringify(err.response.data)
+          : err.message;
+        const status = err.response?.status ? `[Статус ${err.response.status}] ` : '';
+
+        alert(`Ошибка загрузки доски! ${status}${errorDetail}`);
       } finally {
         setLoading(false);
       }
@@ -201,57 +196,127 @@ const KanbanBoard = () => {
     loadData();
   }, [navigate, currentUser]);
 
-  const moveTask = async (taskId, currentColumnId) => {
-    const currentIndex = columns.findIndex(c => c.id === currentColumnId);
-    const nextColumn = columns[currentIndex + 1];
-    if (!nextColumn) return;
-    try {
-      await axios.patch(`${TASKS_API}${taskId}/`, { column: nextColumn.id });
-      setTasks(tasks.map(t => t.id === taskId ? { ...t, column: nextColumn.id } : t));
-    } catch (e) { console.error(e); }
-  };
-
   const addTask = async () => {
-    if (!newTaskTitle.trim()|| columns.length === 0) return;
+    if (!newTaskTitle.trim() || columns.length === 0) return;
+
     try {
+      let formattedDeadline = null;
+      if (deadlineDate) {
+        const parsedDate = new Date(`${deadlineDate}T${deadlineTime || '00:00'}:00`);
+        if (!isNaN(parsedDate.getTime())) {
+          formattedDeadline = parsedDate.toISOString();
+        } else {
+          alert("Пожалуйста, введите корректную дату дедлайна.");
+          return;
+        }
+      }
+
+      // Убираем дублирование решёток и чистим пробелы
+      const cleanTags = newTaskTags
+        .split(',')
+        .map(t => t.trim().replace(/^#+/, ''))
+        .filter(Boolean);
+
+      const descriptionWithTags = cleanTags.length > 0
+        ? `${currentUser}|${cleanTags.join(',')}`
+        : currentUser;
+
       const res = await axios.post(TASKS_API, {
         title: newTaskTitle,
-        description: currentUser,
+        description: descriptionWithTags,
         column: columns[0].id,
-        deadline: new Date(newTaskDeadline).toISOString()
+        deadline: formattedDeadline
       });
-      setTasks(prev => [...prev, res.data]);
-      setNewTaskTitle('');
-    } catch (e) {
-      console.error("Ошибка при создании:", e.response?.data);
-      const fakeId = Date.now();
-      const fallbackTask = {
-        id: fakeId,
-        title: newTaskTitle,
-        description: currentUser,
-        column: columns[0].id,
-        deadline: newTaskDeadline
+
+      const newTaskObject = {
+        ...res.data,
+        tags: cleanTags
       };
-      setTasks(prev => [...prev, fallbackTask]);
+
+      setTasks(prev => [...prev, newTaskObject]);
       setNewTaskTitle('');
+      setNewTaskTags('');
+      setDeadlineDate('');
+      setDeadlineTime('23:59');
+    } catch (e) {
+      console.error("Ошибка при создании задачи:", e);
+      alert(`Ошибка при создании: ${e.response?.data ? JSON.stringify(e.response.data) : e.message}`);
+    }
+  };
+
+  const moveTask = async (taskId, currentColumnId) => {
+    const currentIdx = columns.findIndex(col => col.id === currentColumnId);
+    const currentColumn = columns[currentIdx];
+    const nextColumn = columns[currentIdx + 1];
+
+    if (!nextColumn) return;
+
+    try {
+      await axios.patch(`${TASKS_API}${taskId}/`, {
+        column: nextColumn.id
+      });
+
+      const timestamp = new Date().toISOString();
+      const logEntry = {
+        taskId,
+        taskTitle: tasks.find(t => t.id === taskId)?.title || 'Без названия',
+        fromColumn: currentColumn.title || currentColumn.name,
+        toColumn: nextColumn.title || nextColumn.name,
+        movedAt: timestamp
+      };
+      const existingLogs = JSON.parse(localStorage.getItem('task_time_logs') || '[]');
+      existingLogs.push(logEntry);
+      localStorage.setItem('task_time_logs', JSON.stringify(existingLogs));
+      setTasks(prevTasks =>
+        prevTasks.map(t => (t.id === taskId ? { ...t, column: nextColumn.id } : t))
+      );
+    } catch (e) {
+      console.error("Ошибка изменения колонки задачи:", e);
+      alert("Не удалось переместить задачу!");
     }
   };
 
   const deleteTask = async (taskId) => {
+    const taskToDelete = tasks.find(t => t.id === taskId);
+    const taskTitle = taskToDelete?.title || 'Без названия';
+
+    if (!window.confirm(`Вы уверены, что хотите удалить задачу "${taskTitle}"?`)) {
+      return;
+    }
+
     try {
       await axios.delete(`${TASKS_API}${taskId}/`);
+
+      const timestamp = new Date().toISOString();
+      const logEntry = {
+        taskId,
+        taskTitle: taskTitle,
+        fromColumn: 'Находилась на доске',
+        toColumn: 'Удалена',
+        movedAt: timestamp
+      };
+
+      const existingLogs = JSON.parse(localStorage.getItem('task_time_logs') || '[]');
+      existingLogs.push(logEntry);
+      localStorage.setItem('task_time_logs', JSON.stringify(existingLogs));
+
+      setTasks(tasks.filter(t => t.id !== taskId));
     } catch (e) {
-      console.error(e);
+      console.error("Ошибка удаления задачи:", e);
+      alert("Не удалось удалить задачу");
     }
-    setTasks(tasks.filter(t => t.id !== taskId));
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    delete axios.defaults.headers.common['Authorization'];
-    navigate('/login');
-  };
+  const filteredTasks = tasks.filter(task => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+
+    const matchesTitle = task.title?.toLowerCase().includes(query);
+    const tagsArray = task.tags || [];
+    const matchesTags = tagsArray.some(tag => tag.toLowerCase().includes(query));
+
+    return matchesTitle || matchesTags;
+  });
 
   if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}><h2>Загрузка доски...</h2></div>;
 
@@ -259,32 +324,53 @@ const KanbanBoard = () => {
     <div className="app-container">
       <style>{`
         body { margin: 0; background-color: #f0f2f5; font-family: sans-serif; }
-        .header { text-align: center; padding: 30px; position: relative; }
-        .logout-btn { position: absolute; top: 20px; right: 20px; padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; }
-        .input-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .header { text-align: center; padding: 30px; position: relative; display: flex; flex-direction: column; gap: 15px; }
+        .input-group { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
         .input-group input { padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
         .board { display: flex; gap: 20px; justify-content: center; padding: 20px; overflow-x: auto; }
         .column { background: #ebecf0; width: 300px; padding: 15px; border-radius: 10px; min-height: 400px; }
         .task-list { display: flex; flex-direction: column; gap: 10px; }
       `}</style>
 
+      <NavBar />
+
       <div className="header">
-        <button className="logout-btn" onClick={handleLogout}>Выйти ({currentUser})</button>
-        <h1>Project 17 Kanban</h1>
-        <div className="input-group">
-          <input 
-            value={newTaskTitle} 
-            onChange={e => setNewTaskTitle(e.target.value)} 
-            placeholder="Название задачи..." 
-            style={{ width: '250px' }}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1240px', margin: '0 auto', width: '100%', flexWrap: 'wrap', gap: '15px' }}>
+          <h1 style={{ margin: 0 }}>Project 17 Kanban</h1>
+          <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Поиск по названию или тегам..."
+            style={{ width: '300px', padding: '10px 15px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '14px' }}
           />
-          <input 
+        </div>
+
+        <div className="input-group" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <input
+            value={newTaskTitle}
+            onChange={e => setNewTaskTitle(e.target.value)}
+            placeholder="Название задачи..."
+            style={{ width: '220px' }}
+          />
+          <input
+            value={newTaskTags}
+            onChange={e => setNewTaskTags(e.target.value)}
+            placeholder="Теги (через запятую)..."
+            style={{ width: '180px' }}
+          />
+          <input
             type="date"
-            value={newTaskDeadline}
-            onChange={e => setNewTaskDeadline(e.target.value)}
-            style={{ width: '150px' }}
+            value={deadlineDate}
+            onChange={e => setDeadlineDate(e.target.value)}
+            style={{ width: '140px' }}
           />
-          <button onClick={addTask} style={{ padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Создать</button>
+          <input
+            type="time"
+            value={deadlineTime}
+            onChange={e => setDeadlineTime(e.target.value)}
+            style={{ width: '90px' }}
+          />
+          <button onClick={addTask} style={{ padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Создать</button>
         </div>
       </div>
 
@@ -293,15 +379,22 @@ const KanbanBoard = () => {
           <div key={col.id} className="column">
             <h3 style={{ borderBottom: '2px solid #ccc', paddingBottom: '10px' }}>{col.title || col.name}</h3>
             <div className="task-list">
-              {tasks.filter(t => t.column === col.id).map(task => (
-                <TaskCard 
-                  key={task.id} 
-                  task={task} 
-                  onMove={() => moveTask(task.id, col.id)} 
-                  onDelete={() => deleteTask(task.id)}
-                  nextText={columns[idx + 1] ? "👉 Далее" : null}
-                />
-              ))}
+              {filteredTasks.filter(t => (col.aliasIds || [col.id]).includes(t.column)).map(task => {
+                const isColumnDone = ['готов', 'done', 'выполн'].some(w =>
+                  (col.title || col.name || '').toLowerCase().includes(w)
+                );
+
+                return (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onMove={() => moveTask(task.id, col.id)}
+                    onDelete={() => deleteTask(task.id)}
+                    nextText={columns[idx + 1] ? "Далее" : null}
+                    isDone={isColumnDone}
+                  />
+                );
+              })}
             </div>
           </div>
         ))}
@@ -317,6 +410,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/kanban" element={<KanbanBoard />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/scheme" element={<SchemePage />} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>
